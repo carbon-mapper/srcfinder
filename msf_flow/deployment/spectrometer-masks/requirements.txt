@@ -1,4 +1,0 @@
-numpy==1.18.5
-spectral==0.21
-scikit-image==0.17.2
-boto3==1.14.26
