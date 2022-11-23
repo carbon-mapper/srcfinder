@@ -36,7 +36,7 @@ class FlightlineConvolve(torch.utils.data.Dataset):
         self.flightline = flightline
         self.transform = transform
 
-        x = np.expand_dims(rasterio.open(self.flightline).read(4), axis=0)
+        x = np.expand_dims(rasterio.open(self.flightline).read(1), axis=0)
         self.inshape = x.shape
         print(self.inshape)
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                                             type=str)
     parser.add_argument('--model', '-m',    help="Model to use for prediction.",
                                             default="COVID_QC",
-                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC"])
+                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "CalCh4_v8+COVID_QC+Permian_QC"])
     parser.add_argument('--gpus', '-g',     help="GPU devices for inference. -1 for CPU.",
                                             nargs='+',
                                             default=[-1],
@@ -146,6 +146,14 @@ if __name__ == "__main__":
                 std=[158.7060]
             )]
         )
+    elif args.model == "CalCh4_v8+COVID_QC+Permian_QC":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[115.0],
+                std=[190.0]
+            )]
+        )
 
     dataloader = torch.utils.data.DataLoader(
         FlightlineConvolve(
@@ -172,7 +180,7 @@ if __name__ == "__main__":
     # Save
     print("[STEP] RESULT EXPORT")
     dataset = rasterio.open(args.flightline)
-    array = dataset.read(4)
+    array = dataset.read(1)
 
     allpred = allpred.reshape(array.shape)
     allpred[array == -9999] = -9999

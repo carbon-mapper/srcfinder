@@ -80,7 +80,7 @@ if __name__ == "__main__":
                                             type=str)
     parser.add_argument('--model', '-m',    help="Model to use for prediction.",
                                             default="COVID_QC",
-                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC"])
+                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "CalCh4_v8+COVID_QC+Permian_QC"])
     parser.add_argument('--gpus', '-g',     help="GPU devices for inference. -1 for CPU.",
                                             nargs='+',
                                             default=[-1],
@@ -163,6 +163,14 @@ if __name__ == "__main__":
             transforms.Normalize(
                 mean=[100.2635],
                 std=[158.7060]
+            )]
+        )
+    elif args.model == "CalCh4_v8+COVID_QC+Permian_QC":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[115.0],
+                std=[190.0]
             )]
         )
 
