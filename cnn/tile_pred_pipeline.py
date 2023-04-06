@@ -69,7 +69,7 @@ class TiledDatasetClass1Ch(torch.utils.data.Dataset):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description = "Compute tilewise CNN predictions."
+        description = "Generate a flightline saliency map with a CNN."
     )
 
     parser.add_argument('tilecsv',       help="CSV file containing relative paths to labeled tiles",
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch', '-b',    help="Batch size per device.",
                                             default=32,
                                             type=int)
-    parser.add_argument('--output', '-o',   help="Output directory for generated saliency maps.",
+    parser.add_argument('--outdir', '-o',   help="Output directory for generated saliency maps.",
                                             default=".",
                                             type=str)
 
@@ -92,9 +92,8 @@ if __name__ == "__main__":
 
 
     csvbase = op.splitext(op.split(args.tilecsv)[1])[0]
-    predcsvf = '_'.join([csvbase,args.model,'predictions.csv'])
-    reportf = '_'.join([csvbase,args.model,'report.txt'])
-    
+    outcsvf = op.join(args.outdir,'_'.join([csvbase,args.model,'predictions.csv']))
+    reportf = op.join(args.outdir,'_'.join([csvbase,args.model,'report.txt']))
 
     # Initial model setup/loading
     print("[STEP] MODEL INITIALIZATION")
@@ -135,12 +134,10 @@ if __name__ == "__main__":
 
     print("[INFO] Initializing Dataloader.")
 
-    crop = 256
     # Transform and dataloader
     if args.model == "COVID_QC":
         transform = transforms.Compose([
             ClampCH4(vmin=0, vmax=4000),
-	    transforms.CenterCrop(crop),
             transforms.Normalize(
                 mean=[110.6390],
                 std=[183.9152]
@@ -149,7 +146,6 @@ if __name__ == "__main__":
     elif args.model == "CalCH4_v8":
         transform = transforms.Compose([
             ClampCH4(vmin=0, vmax=4000),
-	    transforms.CenterCrop(crop),
             transforms.Normalize(
                 mean=[140.6399],
                 std=[237.5434]
@@ -158,16 +154,14 @@ if __name__ == "__main__":
     elif args.model == "Permian_QC":
         transform = transforms.Compose([
             ClampCH4(vmin=0, vmax=4000),
-	    transforms.CenterCrop(crop),
             transforms.Normalize(
                 mean=[100.2635],
                 std=[158.7060]
             )]
         )
-    elif args.model == "CalCh4_v8+COVID_QC+Permian_QC":
+    else: # if args.model == "CalCh4_v8+COVID_QC+Permian_QC":
         transform = transforms.Compose([
             ClampCH4(vmin=0, vmax=4000),
-	    transforms.CenterCrop(crop),
             transforms.Normalize(
                 mean=[115.0],
                 std=[190.0]
@@ -181,7 +175,7 @@ if __name__ == "__main__":
         ),
         batch_size=args.batch * len(args.gpus),
         shuffle=False,
-        num_workers=4 * len(args.gpus)
+        num_workers=len(args.gpus)*4
     )
 
     print("[STEP] MODEL PREDICTION")
@@ -189,8 +183,8 @@ if __name__ == "__main__":
     # Collect model predictions
     allpred = []
     datafiles,datalabs = np.array(dataloader.dataset.datarows).T
-    for inputs,targets in tqdm(dataloader, desc="CNN Pred"):
-        inputs = inputs.to(device)
+    for batch,labels in tqdm(dataloader, desc="CNN Pred"):
+        inputs = batch.to(device)
         with torch.no_grad():
             preds = model(inputs)
             preds = torch.nn.functional.softmax(preds, dim=1)
@@ -201,11 +195,12 @@ if __name__ == "__main__":
     predlabs = np.array(allpred>0.5,dtype=int)
     
     # Save
-    print(f"[INFO] Saving to",predcsvf)
-    np.savetxt(op.join(args.output,predcsvf),
-               np.c_[datafiles,datalabs,allpred],delimiter=',',
+    print(f"[INFO] Saving to",outcsvf)
+    np.savetxt(outcsvf,np.c_[datafiles,datalabs,allpred],delimiter=',',
                fmt='%s',header='path,label,pred')
 
-    with open(op.join(args.output,reportf), 'w') as f:
+    with open(reportf, 'w') as f:
         f.write(classification_report(datalabs, predlabs))
     print("Done!")
+
+
