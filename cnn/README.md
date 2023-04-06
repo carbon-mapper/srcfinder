@@ -128,9 +128,9 @@ $ python cnn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID
 
 ```
 $ python fcn_pred_pipeline.py -h
-usage: fcn_pred_pipeline.py [-h] [--model {COVID_QC,CalCH4_v8,Permian_QC}]
-                            [--gpus GPUS [GPUS ...]] [--batch BATCH]
-                            [--output OUTPUT]
+usage: fcn_pred_pipeline.py [-h] [--band BAND] [--scale SCALE]
+                            [--model {multi}] [--gpus GPUS [GPUS ...]]
+                            [--batch BATCH] [--output OUTPUT]
                             flightline
 
 Generate a flightline saliency map with a FCN.
@@ -140,7 +140,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --model {COVID_QC,CalCH4_v8,Permian_QC}, -m {COVID_QC,CalCH4_v8,Permian_QC}
+  --band BAND, -n BAND  Band to read if multiband
+  --scale SCALE, -s SCALE
+                        Downscaling factor of the model
+  --model {multi}, -m {multi}
                         Model to use for prediction.
   --gpus GPUS [GPUS ...], -g GPUS [GPUS ...]
                         GPU devices for inference. -1 for CPU.
