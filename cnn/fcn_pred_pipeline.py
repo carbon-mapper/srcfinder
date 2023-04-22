@@ -43,6 +43,7 @@ class FlightlineShiftStitch(torch.utils.data.Dataset):
 
         self.x = rasterio.open(self.flightline).read(band)
         self.x_shape = self.x.shape
+        print(f"[INFO] Flightline shape {self.x_shape}")
 
         pad0 = scale - (self.x_shape[0] % self.scale)
         pad1 = scale - (self.x_shape[1] % self.scale)
@@ -134,7 +135,7 @@ if __name__ == "__main__":
 
     print("[INFO] Finding model weightpath.")
 
-    weightpath = "models/multi_256AA.pt"
+    weightpath = "models/CalCh4_v8+COVID_QC+Permian_QC_AA.pt"
     if op.isfile(weightpath):
         print(f"[INFO] Found {weightpath}.")
     else:
