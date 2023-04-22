@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     print("[INFO] Finding model weightpath.")
 
-    weightpath = "models/multi_256AA.pt"
+    weightpath = "models/CalCh4_v8+COVID_QC+Permian_QC_AA.pt"
     if op.isfile(weightpath):
         print(f"[INFO] Found {weightpath}.")
     else:
