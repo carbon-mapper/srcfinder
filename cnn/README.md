@@ -74,7 +74,7 @@ management.
 
 An example product of running
 ```
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -g 0 1 2 3 -b 4
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -g 0 1 2 3 -b 4 -n 4
 ```
 is provided at `samples/ang20200924t211102_ch4mf_v2y1_img_CalCh4_v8+COVID_QC+Permian_QC_AA_saliency_pad256.img`
 
@@ -95,7 +95,7 @@ $ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID
 ```
 
 ```bash
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g -1 -b 32
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g -1 -b 32 -n 4
 // ETA 35 minutes
 ```
 
@@ -103,19 +103,19 @@ $ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID
 
 ```bash
 // Single GPU inference with batch size 1
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 1
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 1 -n 4
 // ETA 2.5 minutes
 ```
 
 ```bash
 // Single GPU inference with batch size 4
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 4
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 4 -n 4
 // ETA 2.5 minutes
 ```
 
 ```bash
 // Single GPU inference with batch size 8
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 8
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 8 -n 4
 // ETA 2.15 minutes
 ```
 
@@ -123,19 +123,19 @@ $ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID
 
 ```bash
 // Quad-GPU inference with batch size 1 each
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 1
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 1 -n 4
 // ETA 2.5 minutes
 ```
 
 ```bash
 // Quad-GPU inference with batch size 4 each
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 4
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 4 -n 4
 // ETA 1.5 minutes
 ```
 
 ```bash
 // Quad-GPU inference with batch size 8 each
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 8
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 8 -n 4
 // ETA 1 minute
 ```
 
