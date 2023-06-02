@@ -14,6 +14,7 @@ from torch.nn import functional as F
 from torchvision import transforms
 
 import rasterio
+from archs.googlenet1 import googlenet as googlenet_old
 from archs.googlenetAA import googlenet
 
 class ClampCH4(object):
@@ -36,14 +37,11 @@ class FlightlineShiftStitch(torch.utils.data.Dataset):
     FlightlineShiftStitch(flightlinepath, transform, scale)
     """
     
-    def __init__(self, flightline, transform, scale=32, band=1):
-        self.flightline = flightline
+    def __init__(self, x, transform, scale=32, band=1):
+        self.x = x
+        self.x_shape = x.shape
         self.transform = transform
         self.scale = scale
-
-        self.x = rasterio.open(self.flightline).read(band)
-        self.x_shape = self.x.shape
-        print(f"[INFO] Flightline shape {self.x_shape}")
 
         pad0 = scale - (self.x_shape[0] % self.scale)
         pad1 = scale - (self.x_shape[1] % self.scale)
@@ -107,15 +105,17 @@ if __name__ == "__main__":
 
     parser.add_argument('flightline',       help="Filepaths to flightline ENVI IMG.",
                                             type=str)
+    parser.add_argument('--pad', '-p',      help="Pad input by 0 or more pixels to avoid edge effects.",
+                                            default=256,
+                                            type=int)
     parser.add_argument('--band', '-n',     help="Band to read if multiband",
-                                            default=4,
+                                            default=1,
                                             type=int)
     parser.add_argument('--scale', '-s',    help="Downscaling factor of the model",
                                             default=32,
                                             type=int)
     parser.add_argument('--model', '-m',    help="Model to use for prediction.",
-                                           default="multi",
-                                           choices=["multi"])
+                                            default="CalCh4_v8+COVID_QC+Permian_QC_AA")
     parser.add_argument('--gpus', '-g',     help="GPU devices for inference. -1 for CPU.",
                                             nargs='+',
                                             default=[-1],
@@ -134,8 +134,8 @@ if __name__ == "__main__":
     print("[STEP] MODEL INITIALIZATION")
 
     print("[INFO] Finding model weightpath.")
-
-    weightpath = "models/CalCh4_v8+COVID_QC+Permian_QC_AA.pt"
+    weightpath = op.join(os.path.dirname(os.path.abspath(__file__)), 'models', 
+                            args.model + ".pt")
     if op.isfile(weightpath):
         print(f"[INFO] Found {weightpath}.")
     else:
@@ -147,16 +147,24 @@ if __name__ == "__main__":
         # CPU
         device = torch.device('cpu')
     else:
-        if not torch.cuda.is_available():
-            print("[ERR] CUDA not found, exiting.")
-            sys.exit(1)
+        if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+            # apple m1/m2
+            device = torch.device("mps")
+        else:
+            if not torch.cuda.is_available():
+                print("[ERR] CUDA not found, exiting.")
+                sys.exit(1)
         
-        # Set first device
-        device = torch.device(f"cuda:{args.gpus[0]}")
-
+            # Set first device
+            device = torch.device(f"cuda:{args.gpus[0]}")
+    print(f'[INFO] using device: {device}')
+    
     print("[INFO] Loading model.")
-    model = googlenet(pretrained=False, num_classes=2, init_weights=False, num_channels=1)
-    model.load_state_dict(torch.load(weightpath))
+    if "AA" not in args.model:
+        model = googlenet_old(pretrained=False, num_classes=2, init_weights=False)
+    else:
+        model = googlenet(pretrained=False, num_classes=2, init_weights=False)
+    model.load_state_dict(torch.load(weightpath,map_location=device))
     
     # FCN model setup
     print("[INFO] Converting CNN to FCN.")
@@ -165,16 +173,10 @@ if __name__ == "__main__":
     # 256 = (8,8)
     # 64 = (2,2)
     fcn.add_module('pool_repl', nn.AvgPool2d((8,8), 1, padding=4, ceil_mode=False, count_include_pad=False))
-    #fcn.add_module('pool_repl', nn.AvgPool2d((2,2), 1, padding=1, ceil_mode=False, count_include_pad=False))
     fcn.add_module('pool_crop', nn.ConstantPad2d((0, -1, 0, -1), 0))
     fcn.add_module('final_conv', nn.Conv2d(1024, 2, kernel_size=1).to(device))
     fcn.final_conv.weight.data.copy_(model.fc.weight.data[:,:,None,None])
     fcn.final_conv.bias.data.copy_(model.fc.bias.data)
-
-    # fcn = nn.Sequential(*list(model.children())[:-2]).to(device)
-    # fcn.add_module('final_conv', nn.Conv2d(256, 2, kernel_size=1).to(device))
-    # fcn.final_conv.weight.data.copy_(model.fc.weight.data[:,:,None,None])
-    # fcn.final_conv.bias.data.copy_(model.fc.bias.data)
 
     if len(args.gpus) > 1:
         # Multi-GPU
@@ -188,31 +190,32 @@ if __name__ == "__main__":
 
     print("[INFO] Initializing Dataloader.")
     # Transform and dataloader
-#    if args.model == "COVID_QC":
-#        transform = transforms.Compose([
-#            ClampCH4(vmin=0, vmax=4000),
-#            transforms.Normalize(
-#                mean=[110.6390],
-#                std=[183.9152]
-#            )]
-#        )
-#    elif args.model == "CalCH4_v8":
-#        transform = transforms.Compose([
-#            ClampCH4(vmin=0, vmax=4000),
-#            transforms.Normalize(
-#                mean=[140.6399],
-#                std=[237.5434]
-#            )]
-#        )
-#    elif args.model == "Permian_QC":
-#        transform = transforms.Compose([
-#            ClampCH4(vmin=0, vmax=4000),
-#            transforms.Normalize(
-#                mean=[100.2635],
-#                std=[158.7060]
-#            )]
-#        )
-    if "multi" in args.model:
+    if args.model == "COVID_QC":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[110.6390],
+                std=[183.9152]
+            )]
+        )
+    elif args.model == "CalCH4_v8":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[140.6399],
+                std=[237.5434]
+            )]
+        )
+    elif args.model == "Permian_QC":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[100.2635],
+                std=[158.7060]
+            )]
+        )
+    else:
+        print(f'[INFO] Using multicampaign norm factors')
         transform = transforms.Compose([
             ClampCH4(vmin=0, vmax=4000),
             transforms.Normalize(
@@ -221,18 +224,22 @@ if __name__ == "__main__":
             )]
         )
 
+    dataset = rasterio.open(args.flightline)
+    pad = args.pad
+    x = np.pad(dataset.read(args.band),pad,constant_values=-9999)
+
     dataloader = torch.utils.data.DataLoader(
         FlightlineShiftStitch(
-            args.flightline,
+            x,
             transform=transform,
             scale=args.scale,
-            band=args.band
         ),
         batch_size=args.batch * len(args.gpus),
         shuffle=False,
         num_workers=0
     )
 
+    cmfbase = op.split(args.flightline)[1]
     print("[STEP] MODEL PREDICTION")
 
     # Run shift predictions
@@ -244,20 +251,20 @@ if __name__ == "__main__":
         with torch.no_grad():
             preds = fcn(inputs)
             preds = torch.nn.functional.softmax(preds, dim=1)
+            preds = preds.cpu().detach().numpy()[:,1,:,:]
             if allpred is None:
-                allpred = preds.cpu().detach().numpy()[:,1,:,:]
+                allpred = preds
             else:
-                allpred = np.concatenate((allpred, preds.cpu().detach().numpy()[:,1,:,:]), axis=0)
+                allpred = np.concatenate((allpred, preds))
             ts += t
             ls += l
-            #allpred += [x[1] for x in preds.cpu().detach().numpy()]
 
     # Stitch
     print("[INFO] Stitching shifts.")
-    dataset = rasterio.open(args.flightline)
-    array = dataset.read(args.band)
-    allpred = stitch_stack(array.shape, ts, ls, allpred, scale=args.scale)
-    allpred[array == -9999] = -9999
+    allpred = stitch_stack(x.shape, ts, ls, allpred, scale=args.scale)
+    allpred[x == -9999] = -9999
+    if pad>0:
+        allpred = allpred[pad:-pad,pad:-pad]
 
     # Save
     print("[STEP] RESULT EXPORT")
@@ -270,8 +277,9 @@ if __name__ == "__main__":
             compress='lzw'
         )
 
-        print(f"[INFO] Saving to", op.join(args.output, f"{Path(args.flightline).stem}_saliency.img"))
-        with rasterio.open(op.join(args.output, f"{Path(args.flightline).stem}_saliency.img"), 'w', **profile) as dst:
+        outf = f"{Path(args.flightline).stem}_{args.model}_saliency_pad{pad}.img"
+        print(f"[INFO] Saving to", op.join(args.output, outf))
+        with rasterio.open(op.join(args.output, outf), 'w', **profile) as dst:
             dst.write(allpred.astype(rasterio.float32), 1)
 
     print("Done!")
