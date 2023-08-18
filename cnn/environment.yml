@@ -4,8 +4,6 @@ channels:
 - nvidia
 - pytorch
 dependencies:
-- _libgcc_mutex=0.1
-- _openmp_mutex=4.5
 - affine=2.4.0
 - alsa-lib=1.2.8
 - attr=2.5.1
