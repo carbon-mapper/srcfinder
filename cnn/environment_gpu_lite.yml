@@ -1,0 +1,19 @@
+name: cmml
+channels:
+- pytorch
+- nvidia
+- conda-forge
+dependencies:
+- python=3.10
+- numpy
+- matplotlib
+- notebook
+- scipy
+- tqdm
+- scikit-learn
+- scikit-image
+- rasterio
+- pytorch
+- torchvision
+- torchaudio
+- pytorch-cuda=12.1

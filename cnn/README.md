@@ -2,9 +2,22 @@
 
 This directory contains pipelines for deep learning detection of methane plumes.
 
-The FCN Pipeline is recommended, as it produces similar detection performance as the CNN pipeline with orders of magnitude faster compute.
+Last Updated 2024-01-30
 
-The `CalCh4_v8+COVID_QC+Permian_QC_AA` model is recommended, as it has superior multi-campaign detection and leverages anti-aliasing for cleaner saliency map output.
+## Environment
+
+### Conda/Mamba
+
+Two `conda`/`mamba` environments are provided depending on system resources. Mamba is strongly recommended
+due to the complexity of the solve.
+
+```bash
+mamba env create -f environment_gpu_lite.yml  # For GPU-available systems
+mamba env create -f encironment_cpu_lite.yml  # For CPU-available systems
+```
+The only difference between the two environments is the `pytorch` channel `pytorch-cuda=12.1` vs. `cpuonly`.
+
+_Note: the previous [environment.yml](https://github.com/carbon-mapper/srcfinder/blob/258ce398a445ead4e295ab9db3dce7c080eedcff/cnn/environment.yml) is likely compatible._
 
 ## FCN Pipeline
 
