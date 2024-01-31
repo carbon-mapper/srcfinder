@@ -14,8 +14,10 @@ due to the complexity of the solve.
 ```bash
 mamba env create -f environment_gpu_lite.yml  # For GPU-available systems
 mamba env create -f encironment_cpu_lite.yml  # For CPU-available systems
+pip install wandb
 ```
 The only difference between the two environments is the `pytorch` channel `pytorch-cuda=12.1` vs. `cpuonly`.
+Weights and Biases is used for experiment tracking, and is only needed for model training.
 
 _Note: the previous [environment.yml](https://github.com/carbon-mapper/srcfinder/blob/258ce398a445ead4e295ab9db3dce7c080eedcff/cnn/environment.yml) is likely compatible._
 
@@ -122,7 +124,7 @@ Labeled datasets are defined as absolute paths to datasets stored on G3K
 
 Trained with
 ```
-python train_classifier.py train_abspath_g3k.csv test_abspath_g3k.csv \
+python train_cls.py train_abspath_g3k.csv test_abspath_g3k.csv \
 --lr 0.0001 \
 --epochs 100 \
 --batch 16 \
@@ -143,3 +145,87 @@ _to be added_
 #### `models/multicampaign_UPerNet.pt`
 
 _to be added_
+
+## FCN Pipeline
+
+### Training
+
+This trains an antialiased GoogLeNet plume classification model for conversion to FCN,
+or for use as a backbone for UPerNet.
+
+```bash
+% python train_cls.py -h
+usage: train_cls.py [-h] [--project PROJECT] [--exp EXP] [--dataroot DATAROOT]
+                    [--model {googlenetAA}] [--lr LR] [--epochs EPOCHS]
+                    [--batch BATCH] [--outroot OUTROOT] [--no-sam] [--gpu GPU]
+                    [--wandb-dir WANDB_DIR]
+                    traincsv valcsv
+
+Train a classification model on tiled methane data.
+
+positional arguments:
+  traincsv              Filepath of the training set CSV
+  valcsv                Filepath of the validation set CSV
+
+options:
+  -h, --help            show this help message and exit
+  --project PROJECT     Project name for wandb
+  --exp EXP             Run name for wandb
+  --dataroot DATAROOT   Root directory for relative paths. Defaults to / for
+                        absolute paths.
+  --model {googlenetAA}
+                        Model architecture to train
+  --lr LR               Learning rate
+  --epochs EPOCHS       Epochs for training
+  --batch BATCH         Batch size for model training
+  --outroot OUTROOT     Root of output directories
+  --no-sam              Disable SAM
+  --gpu GPU             GPU index to use
+  --wandb-dir WANDB_DIR
+                        Output directory for wandb logs. Defaults to ./wandb
+```
+
+Notes:
+- Model training accesses many small files very quickly. The dataset should be stored on-hardware
+  if possible, not NFS.
+- Model training should be done on a GPU machine for orders-of-magnitude speedup. The included
+  pre-trained model was trained on G3K with 1 GPU (RTX 5000) in 4 hours.
+
+### Flightline Inference
+
+This converts a plume classification model into a FCN segementation model.
+Given a CMF flightline, produces a saliency map ENVI IMG. Values from [0, 1] indicate plume confidence.
+
+_Backwards Compatibility: This is equivalent to `fcn_pred_pipeline.py` from the previous delivery._
+
+```bash
+% python predict_flightline_clsfcn.py -h
+usage: predict_flightline_clsfcn.py [-h] [--pad PAD] [--band BAND]
+                                    [--model MODEL] [--gpus GPUS [GPUS ...]]
+                                    [--batch BATCH] [--outroot OUTROOT]
+                                    flightline
+
+Generate a flightline saliency map with a FCN.
+
+positional arguments:
+  flightline            Filepaths to flightline ENVI IMG.
+
+options:
+  -h, --help            show this help message and exit
+  --pad PAD, -p PAD     Pad input by 0 or more pixels to avoid edge effects.
+  --band BAND, -n BAND  Band to read if multiband
+  --model MODEL, -m MODEL
+                        Model to use for prediction.
+  --gpus GPUS [GPUS ...], -g GPUS [GPUS ...]
+                        GPU devices for inference. -1 for CPU.
+  --batch BATCH, -b BATCH
+                        Batch size per device.
+  --outroot OUTROOT, -o OUTROOT
+                        Output directory for generated saliency maps.
+```
+
+Notes:
+- FCN is the most compute-intensive pipeline. Prior work showed that inference on a GPU
+  took around 2 minutes, while inference on a CPU took about 30 minutes.
+- FCN is the worst-performing pipeline compared to U-Net and UPerNet pipelines, as shown
+  in [Lee et al.](https://doi.org/10.22541/essoar.170365353.38110853/v1)
