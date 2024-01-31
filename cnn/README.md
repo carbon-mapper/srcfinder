@@ -318,3 +318,8 @@ Notes:
 - This pipeline can predict an entire flightline within seconds on a GPU.
 - Even if the entire flightline cannot be loaded into a GPU VRAM, runtime on CPU is feasible.
 - _Additional compute information to come_
+
+## Archive
+
+- `archive/posthoc_down.py`
+  - Jake's methodology for downsampling airborne flightlines to spaceborne-like resolution.
