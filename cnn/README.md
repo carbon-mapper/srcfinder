@@ -99,11 +99,13 @@ options:
 - U-Net: `archs/unet.py`
   - Convolutional network(s) for segmentation as described by [Ronneberger et al.](https://arxiv.org/abs/1505.04597)
   - Variant delivered is `unet.DeepPaddedUNet`, which adds an additional double convolution block.
+  - We have previously described this model as "UC-Net", as it trains on combined segmentation and classification loss.
 - UPerNet: `archs`
   - UPerNet as described by [Xiao et al.](https://arxiv.org/abs/1807.10221)
   - Modified from implementation from [pytorch-segmentation](https://github.com/yassouali/pytorch-segmentation/blob/master/models/upernet.py)
     - Replaced ConvNext with GoogLeNet backbone model
     - Replaced PSP pooling to use fixed kernel sizes instead of adaptive pooling
+  - This model also trains on combined segmentation and classification loss.
 
 ### Labels
 
@@ -150,8 +152,8 @@ _to be added_
 
 ### Training
 
-This trains an antialiased GoogLeNet plume classification model for conversion to FCN,
-or for use as a backbone for UPerNet.
+This trains an antialiased GoogLeNet plume classification model for
+conversion to FCN, or for use as a backbone for UPerNet.
 
 ```bash
 % python train_cls.py -h
@@ -186,15 +188,17 @@ options:
 ```
 
 Notes:
-- Model training accesses many small files very quickly. The dataset should be stored on-hardware
-  if possible, not NFS.
-- Model training should be done on a GPU machine for orders-of-magnitude speedup. The included
-  pre-trained model was trained on G3K with 1 GPU (RTX 5000) in 4 hours.
+- Model training accesses many small files very quickly.
+  The dataset should be stored on-hardware if possible, not NFS.
+- Model training should be done on a GPU machine for orders-of-magnitude
+  speedup. The included pre-trained model was trained on G3K with 1 GPU
+  (RTX 5000) in 4 hours.
 
 ### Flightline Inference
 
 This converts a plume classification model into a FCN segementation model.
-Given a CMF flightline, produces a saliency map ENVI IMG. Values from [0, 1] indicate plume confidence.
+Given a CMF flightline, produces a saliency map ENVI IMG. Values from [0, 1]
+indicate plume confidence.
 
 _Backwards Compatibility: This is equivalent to `fcn_pred_pipeline.py` from the previous delivery._
 
@@ -229,3 +233,88 @@ Notes:
   took around 2 minutes, while inference on a CPU took about 30 minutes.
 - FCN is the worst-performing pipeline compared to U-Net and UPerNet pipelines, as shown
   in [Lee et al.](https://doi.org/10.22541/essoar.170365353.38110853/v1)
+- _Additional compute information to come_
+
+## U-Net & UPerNet Pipeline
+
+### Training
+
+This trains a U-Net or UPerNet model for plume detection via segmentation.
+
+```bash
+% python train_unet_upnet.py -h
+usage: train_unet_upnet.py [-h] [--project PROJECT] [--exp EXP]
+                           [--dataroot DATAROOT] [--model {DeepUNet,UPerNet}]
+                           [--lr LR] [--epochs EPOCHS] [--batch BATCH]
+                           [--outroot OUTROOT] [--gpu GPU]
+                           [--backbone BACKBONE] [--wandb-dir WANDB_DIR]
+                           traincsv valcsv
+
+Train a segmentation model on tiled methane data.
+
+positional arguments:
+  traincsv              Filepath of the training set CSV
+  valcsv                Filepath of the validation set CSV
+
+options:
+  -h, --help            show this help message and exit
+  --project PROJECT     Project name for wandb
+  --exp EXP             Run name for wandb
+  --dataroot DATAROOT   Root directory for relative paths. Defaults to / for
+                        absolute paths.
+  --model {DeepUNet,UPerNet}
+                        Which model to train
+  --lr LR               Learning rate, U-Net default 0.001, UPerNet default
+                        0.0001
+  --epochs EPOCHS       Epochs for training. Default 200.
+  --batch BATCH         Batch size for model training
+  --outroot OUTROOT     Root of output directories
+  --gpu GPU             Specify GPU index to use
+  --backbone BACKBONE   Filepath to backbone weights. Defaults to
+                        models/multicampaign_googlenet.pt
+  --wandb-dir WANDB_DIR
+                        Output directory for wandb logs. Defaults to ./wandb
+```
+
+Notes:
+- Training a DeepUNet model completely for 200 epochs may take up to 48 hours.
+- A UPerNet model may only require 50 epochs to fully converge.
+- Removing the per-epoch evaluation may improve training time, as it is non-trivial.
+- UPerNet training relies on an existing classification model.
+
+### Flightline Inference
+
+This runs a U-Net or UPerNet directly on the entire cmf flightline.
+Given a CMF flightline, produces a saliency map ENVI IMG. Values from [0, 1]
+indicate plume confidence.
+
+```bash
+% python predict_flightline_unet_upnet.py -h
+usage: predict_flightline_unet_upnet.py [-h] [--band BAND] [--weights WEIGHTS]
+                                        [--arch {UperNet,DeepUNet}]
+                                        [--gpus GPUS [GPUS ...]]
+                                        [--outroot OUTROOT]
+                                        flightline
+
+Generate a flightline saliency map with a FCN.
+
+positional arguments:
+  flightline            Filepaths to flightline ENVI IMG.
+
+options:
+  -h, --help            show this help message and exit
+  --band BAND, -n BAND  Band to read if multiband
+  --weights WEIGHTS, -w WEIGHTS
+                        Weights to use for prediction.
+  --arch {UperNet,DeepUNet}, -a {UperNet,DeepUNet}
+                        Arch to use for prediction.
+  --gpus GPUS [GPUS ...], -g GPUS [GPUS ...]
+                        GPU devices for inference. -1 for CPU.
+  --outroot OUTROOT, -o OUTROOT
+                        Output directory for generated saliency maps.
+```
+
+Notes:
+- This pipeline can predict an entire flightline within seconds on a GPU.
+- Even if the entire flightline cannot be loaded into a GPU VRAM, runtime on CPU is feasible.
+- _Additional compute information to come_
