@@ -1,0 +1,13 @@
+[project]
+name = "cmutils"
+version = "0.1.0"
+description = "Package of utility functions for Carbon Mapper ML development"
+authors = [
+    { name="Jake Lee", email="jake.h.lee@jpl.nasa.gov" },
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+plot_cmf = "cmutils.cli.plot_cmf:main"
+duptiles_by_ptype = "cmutils.cli.duptiles_by_ptype:main"

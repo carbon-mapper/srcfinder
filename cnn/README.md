@@ -4,7 +4,7 @@ This directory contains pipelines for deep learning detection of methane plumes.
 
 Last Updated 2024-01-30
 
-## Environment
+## Environment and Dependencies
 
 ### Conda/Mamba
 
@@ -18,6 +18,71 @@ mamba env create -f encironment_cpu_lite.yml  # For CPU-available systems
 The only difference between the two environments is the `pytorch` channel `pytorch-cuda=12.1` vs. `cpuonly`.
 
 _Note: the previous [environment.yml](https://github.com/carbon-mapper/srcfinder/blob/258ce398a445ead4e295ab9db3dce7c080eedcff/cnn/environment.yml) is likely compatible._
+
+### cmutils
+
+CMutils is an installable package for common utility functions for Carbon Mapper CNN.
+
+#### Installation
+
+```bash
+cd cmutils
+pip install -e .  # Editable installation
+```
+
+#### Usage
+
+Functions can be imported:
+```python
+import cmutils                      # General utility functions
+import cmutils.pytorch as cmtorch   # Pytorch functions
+```
+
+There are also CLI scripts included:
+```bash
+$ plot_cmf -h
+usage: plot_cmf.py [-h] [--minppmm MINPPMM] [--maxppmm MAXPPMM]
+                   [--maxrdn MAXRDN] [--labpath LABPATH] [--rgbpath RGBPATH]
+                   [--outdir OUTDIR] [--no-gui]
+                   cmfpath
+
+positional arguments:
+  cmfpath            CMF image path
+
+options:
+  -h, --help         show this help message and exit
+  --minppmm MINPPMM  Minimum CH4 enhancement (ppmm). Default 0
+  --maxppmm MAXPPMM  Maximum CH4 enhancement (ppmm). Default 1500
+  --maxrdn MAXRDN    Maximum radiance for scaling rgb channels. Default 15
+  --labpath LABPATH  Override CMF label image path. Default looks for *.png or
+                     *_mask.png
+  --rgbpath RGBPATH  Override CMF rgb image path. Defaults to first 3 channels
+                     of CMF if available, otherwise zeros.
+  --outdir OUTDIR    Output directory for quicklook PDF
+  --no-gui           Disable GUI show for server CLI use
+```
+
+```bash
+$ duptiles_by_ptype -h
+usage: duptiles_by_ptype.py [-h] [--flext FLEXT] [--cores CORES]
+                            tileset flset ptype outdir
+
+Duplicate tiles with new flightlines
+
+positional arguments:
+  tileset               Path to original tiled dataset
+  flset                 Path to where new flightline products are located
+  ptype                 Product type (e.g., _ch4mf_).
+  outdir                Output directory. Must not exist.
+
+options:
+  -h, --help            show this help message and exit
+  --flext FLEXT         Expected file extension of new flightline files. None
+                        by default.
+  --cores CORES, --c CORES
+                        Number of parallel jobs
+```
+
 
 ## FCN Pipeline
 
