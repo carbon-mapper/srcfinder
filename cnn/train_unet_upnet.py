@@ -313,7 +313,7 @@ if __name__ == "__main__":
                                             default="models/multicampaign_googlenet.pt")
     parser.add_argument('--wandb-dir',      help='Output directory for wandb logs. Defaults to ./wandb',
                                             type=str,
-                                            default='./wandb')
+                                            default='./')
 
     args = parser.parse_args()
 
@@ -352,8 +352,6 @@ if __name__ == "__main__":
             'expname': expname,
             'batch_size': args.batch,
             'gpu': args.gpu,
-            'seg_loss': args.seg_loss,
-            'cls_loss': args.cls_loss,
             'architecture': args.model
         }
     )

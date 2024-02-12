@@ -125,14 +125,14 @@ Labeled datasets are defined as absolute paths to datasets stored on G3K
 #### `models/multicampaign_googlenet.pt`
 
 Trained with
-```
+```bash
 python train_cls.py train_abspath_g3k.csv test_abspath_g3k.csv \
 --lr 0.0001 \
 --epochs 100 \
 --batch 16 \
---outroot /path/to/outdir/
---gpu 0
---model googlenetAA
+--outroot /path/to/outdir/ \
+--gpu 0 \
+--model googlenetAA \
 --project 20231106_cls
 ```
 
@@ -140,13 +140,27 @@ To be used as:
 - Model to be converted for FCN
 - Model to be used as a backbone for UPerNet
 
-#### `models/multicampaign_DeepUNet.pt`
+#### `models/multicampaign_deepunet.pt`
 
-_to be added_
+Trained with
+```bash
+python train_unet_upnet.py labels/train_abspath_g3k.csv labels/test_abspath_g3k.csv \
+--project 20240125_sweep \
+--model DeepUNet \
+--outroot outdir/ \
+--gpu 0
+```
 
-#### `models/multicampaign_UPerNet.pt`
+#### `models/multicampaign_upernet.pt`
 
-_to be added_
+Trained with
+```bash
+python train_unet_upnet.py labels/train_abspath_g3k.csv labels/test_abspath_g3k.csv \
+--project 20240125_sweep \
+--model UPerNet \
+--outroot outdir/ \
+--gpu 0
+```
 
 ## FCN Pipeline
 
