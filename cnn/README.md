@@ -151,6 +151,38 @@ python train_unet_upnet.py labels/train_abspath_g3k.csv labels/test_abspath_g3k.
 --gpu 0
 ```
 
+**Pixelwise Segmentation Performance**
+
+| Metric     | Value           |
+|------------|-----------------|
+| AP         | 0.492           |
+| Probability Threshold | 0.0116       |
+| Precision  | 0.624           |
+| Recall     | 0.569           |
+| F1 Score   | 0.595           |
+| True Positive (TP) | 525,189       |
+| False Positive (FP)| 316,153       |
+| False Negative (FN)| 398,170       |
+| True Negative (TN)| 428,021,288   |
+| Number of Positive Samples | 923,359 |
+| Number of Negative Samples | 428,337,441 |
+
+**Tilewise Classification Performance**
+
+| Metric     | Value           |
+|------------|-----------------|
+| AP         | 0.821           |
+| Probability Threshold | 0.777       |
+| Precision  | 0.769           |
+| Recall     | 0.802           |
+| F1 Score   | 0.785           |
+| True Positive (TP) | 260           |
+| False Positive (FP)| 78            |
+| False Negative (FN)| 64            |
+| True Negative (TN)| 6,148          |
+| Number of Positive Samples | 324     |
+| Number of Negative Samples | 6,226   |
+
 #### `models/multicampaign_upernet.pt`
 
 Trained with
@@ -161,6 +193,38 @@ python train_unet_upnet.py labels/train_abspath_g3k.csv labels/test_abspath_g3k.
 --outroot outdir/ \
 --gpu 0
 ```
+
+**Pixelwise Segmentation Performance**
+
+| Metric     | Value           |
+|------------|-----------------|
+| AP         | 0.562           |
+| Probability Threshold | 0.7013      |
+| Precision  | 0.648           |
+| Recall     | 0.572           |
+| F1 Score   | 0.608           |
+| True Positive (TP) | 528,547       |
+| False Positive (FP)| 286,925       |
+| False Negative (FN)| 394,812       |
+| True Negative (TN)| 428,050,516   |
+| Number of Positive Samples | 923,359 |
+| Number of Negative Samples | 428,337,441 |
+
+**Tilewise Classification Performance**
+
+| Metric     | Value           |
+|------------|-----------------|
+| AP         | 0.869           |
+| Probability Threshold | 0.1338      |
+| Precision  | 0.808           |
+| Recall     | 0.806           |
+| F1 Score   | 0.807           |
+| True Positive (TP) | 261           |
+| False Positive (FP)| 62            |
+| False Negative (FN)| 63            |
+| True Negative (TN)| 6,164          |
+| Number of Positive Samples | 324     |
+| Number of Negative Samples | 6,226   |
 
 ## FCN Pipeline
 
